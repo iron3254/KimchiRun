@@ -1,17 +1,15 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
-    public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        string[] enemies = { "좀비", "스켈레톤", "크리퍼", "거미", "엔더맨" };
+        for (int i = 0; i < enemies.Length; i++)
+        {
+            Debug.Log(enemies[i]);
+        }
     }
 }
 
