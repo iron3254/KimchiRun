@@ -2,8 +2,16 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    public float jumpForce = 7f;
-    public int maxJumpCount = 2; // 최대 허용 점프 횟수 (2 = 더블점프)
+    [Header("점프 설정")]
+    [Tooltip("원하는 최대 점프 높이 (단위: 미터/유닛)")]
+    [Range(1f, 10f)]
+    public float jumpHeight = 3f; // 고정할 점프 높이
+    [Tooltip("최고점에 도달하는 데 걸리는 시간 (작을수록 올라가는 속도가 빠름)")]
+    [Range(0.1f, 1.5f)]
+    public float timeToJumpApex = 0.4f; // 올라가는 시간
+    [Range(0.1f, 10f)]
+    public float fallGravityScale = 1f; // 내려올 때 (낙하 중) 중력 스케일
+    public int maxJumpCount = 1; // 최대 허용 점프 횟수 (1 = 단일 점프)
 
     private Rigidbody2D rigid;
     private Animator anim;
@@ -17,11 +25,19 @@ public class Player : MonoBehaviour
 
     void Update()
     {
+        // 현재 설정된 높이와 시간에 맞춰 필요한 중력과 초기 속도를 매 프레임 계산
+        // 초기속도 v = 2 * h / t, 중력 g = 2 * h / t^2
+        float requiredGravity = (2f * jumpHeight) / (timeToJumpApex * timeToJumpApex);
+        float calculatedJumpGravityScale = requiredGravity / Mathf.Abs(Physics2D.gravity.y);
+
         // 스페이스 키를 누르고 있고, 남은 점프 횟수가 있을 때 점프
-        if (Input.GetKeyDown(KeyCode.Space) && currentJumpCount < maxJumpCount)
+        if (Input.GetKey(KeyCode.Space) && currentJumpCount < maxJumpCount)
         {
+            // 설정한 jumpHeight와 timeToJumpApex에 맞춰 점프 속도 자동 계산
+            float calculatedSpeed = (2f * jumpHeight) / timeToJumpApex;
+
             // 2D 환경이므로 Vector2를 사용합니다.
-            rigid.linearVelocity = new Vector2(rigid.linearVelocity.x, jumpForce);
+            rigid.linearVelocity = new Vector2(rigid.linearVelocity.x, calculatedSpeed);
             currentJumpCount++; // 점프할 때마다 횟수 증가
 
             // 점프 애니메이션 파라미터 켜기
@@ -41,6 +57,23 @@ public class Player : MonoBehaviour
 
             // 2. 현재 절대적인 높이 위치
             anim.SetFloat("HeightY", transform.position.y);
+        }
+
+        // --- 점프/낙하 시간에 따른 중력(속도) 조절 ---
+        if (rigid.linearVelocity.y > 0.01f)
+        {
+            // 위로 올라가는 중 (계산된 정확한 중력 적용)
+            rigid.gravityScale = calculatedJumpGravityScale;
+        }
+        else if (rigid.linearVelocity.y < -0.01f)
+        {
+            // 아래로 떨어지는 중
+            rigid.gravityScale = fallGravityScale;
+        }
+        else
+        {
+            // 바닥에 있거나 정점(잠깐 멈춘 상태)일 때
+            rigid.gravityScale = 1f;
         }
     }
 
