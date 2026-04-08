@@ -30,7 +30,7 @@ public class Player : MonoBehaviour
         float requiredGravity = (2f * jumpHeight) / (timeToJumpApex * timeToJumpApex);
         float calculatedJumpGravityScale = requiredGravity / Mathf.Abs(Physics2D.gravity.y);
 
-        // 스페이스 키를 누르고 있고, 남은 점프 횟수가 있을 때 점프
+        // 스페이스 키를 꾹 누르고 있어도 연속해서 점프가 되도록 GetKey 사용
         if (Input.GetKey(KeyCode.Space) && currentJumpCount < maxJumpCount)
         {
             // 설정한 jumpHeight와 timeToJumpApex에 맞춰 점프 속도 자동 계산
@@ -86,6 +86,8 @@ public class Player : MonoBehaviour
         if (anim != null)
         {
             anim.SetBool("isJumping", false);
+            // PlayerJump 애니메이션의 진행 정도를 즉시 0(처음)으로 완전히 초기화
+            anim.Play("PlayerJump", -1, 0f);
         }
     }
 }
