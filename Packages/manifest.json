@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#beta",
     "com.termway.ide.antigravity": "https://github.com/TermWay/unity-ide-antigravity.git",
     "com.unity.2d.animation": "13.0.4",
     "com.unity.2d.aseprite": "3.0.1",
