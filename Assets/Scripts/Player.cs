@@ -59,16 +59,36 @@ public class Player : MonoBehaviour
             anim.SetFloat("HeightY", transform.position.y);
         }
 
-        // --- 점프/낙하 시간에 따른 중력(속도) 조절 ---
+        // --- 점프/낙하 시간에 따른 중력(속도) 조절 및 애니메이션 변경 ---
         if (rigid.linearVelocity.y > 0.01f)
         {
             // 위로 올라가는 중 (계산된 정확한 중력 적용)
             rigid.gravityScale = calculatedJumpGravityScale;
+
+            if (anim != null)
+            {
+                // 애니메이션이 매 프레임 처음부터 재생되는 현상을 막기 위해 현재 상태 확인
+                AnimatorStateInfo stateInfo = anim.GetCurrentAnimatorStateInfo(0);
+                if (!stateInfo.IsName("PlayerJump"))
+                {
+                    anim.Play("PlayerJump");
+                }
+            }
         }
         else if (rigid.linearVelocity.y < -0.01f)
         {
             // 아래로 떨어지는 중
             rigid.gravityScale = fallGravityScale;
+
+            if (anim != null)
+            {
+                // 내려갈 때는 낙하 애니메이션 재생
+                AnimatorStateInfo stateInfo = anim.GetCurrentAnimatorStateInfo(0);
+                if (!stateInfo.IsName("PlayerLand"))
+                {
+                    anim.Play("PlayerLand");
+                }
+            }
         }
         else
         {
@@ -86,8 +106,6 @@ public class Player : MonoBehaviour
         if (anim != null)
         {
             anim.SetBool("isJumping", false);
-            // PlayerJump 애니메이션의 진행 정도를 즉시 0(처음)으로 완전히 초기화
-            anim.Play("PlayerJump", -1, 0f);
         }
     }
 }
