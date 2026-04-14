@@ -2,111 +2,108 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    public enum PlayerState
+    {
+
+        Run = 0,
+
+        Jump = 1,
+
+        Land = 2
+
+    }
+
     [Header("점프 설정")]
-    [Tooltip("원하는 최대 점프 높이 (단위: 미터/유닛)")]
     [Range(1f, 10f)]
-    public float jumpHeight = 3f; // 고정할 점프 높이
-    [Tooltip("최고점에 도달하는 데 걸리는 시간 (작을수록 올라가는 속도가 빠름)")]
+    [SerializeField] private float jumpHeight = 3f;
+
     [Range(0.1f, 1.5f)]
-    public float timeToJumpApex = 0.4f; // 올라가는 시간
+    [SerializeField] private float timeToJumpApex = 0.4f;
+
     [Range(0.1f, 10f)]
-    public float fallGravityScale = 1f; // 내려올 때 (낙하 중) 중력 스케일
-    public int maxJumpCount = 1; // 최대 허용 점프 횟수 (1 = 단일 점프)
+    [SerializeField] private float fallGravityScale = 1f;
 
-    private Rigidbody2D rigid;
-    private Animator anim;
-    private int currentJumpCount = 0;
+    [SerializeField] private int maxJumpCount = 1;
 
-    void Start()
+    private Rigidbody2D _rigid;
+    private Animator _anim;
+    private int _currentJumpCount;
+
+    private void Start()
     {
-        rigid = GetComponent<Rigidbody2D>();
-        anim = GetComponent<Animator>();
+        _rigid = GetComponent<Rigidbody2D>();
+        _anim = GetComponent<Animator>();
+        _currentJumpCount = 0;
     }
 
-    void Update()
+    private void Update()
     {
-        // 현재 설정된 높이와 시간에 맞춰 필요한 중력과 초기 속도를 매 프레임 계산
-        // 초기속도 v = 2 * h / t, 중력 g = 2 * h / t^2
-        float requiredGravity = (2f * jumpHeight) / (timeToJumpApex * timeToJumpApex);
-        float calculatedJumpGravityScale = requiredGravity / Mathf.Abs(Physics2D.gravity.y);
+        bool canJump = true;
+        bool isJumpAnim = false;
+        bool isLandAnim = false;
 
-        // 스페이스 키를 꾹 누르고 있어도 연속해서 점프가 되도록 GetKey 사용
-        if (Input.GetKey(KeyCode.Space) && currentJumpCount < maxJumpCount)
+        // 1. 애니메이터 상태 확인 및 갱신
+        if (_anim != null)
         {
-            // 설정한 jumpHeight와 timeToJumpApex에 맞춰 점프 속도 자동 계산
-            float calculatedSpeed = (2f * jumpHeight) / timeToJumpApex;
+            AnimatorStateInfo stateInfo = _anim.GetCurrentAnimatorStateInfo(0);
+            isJumpAnim = stateInfo.IsName("PlayerJump");
+            isLandAnim = stateInfo.IsName("PlayerLand");
 
-            // 2D 환경이므로 Vector2를 사용합니다.
-            rigid.linearVelocity = new Vector2(rigid.linearVelocity.x, calculatedSpeed);
-            currentJumpCount++; // 점프할 때마다 횟수 증가
-
-            // 점프 애니메이션 파라미터 켜기
-            if (anim != null)
+            if (isLandAnim)
             {
-                // 공중에서 더블점프를 뛸 때도 다시 모션을 처음부터 재생하려면 SetTrigger 등을 쓰는 것이 더 좋지만
-                // 현재 설정해둔 isJumping Bool 파라미터를 그대로 유지합니다.
-                anim.SetBool("isJumping", true);
+                _anim.SetInteger("state", (int)PlayerState.Run);
+            }
+            else if (isJumpAnim)
+            {
+                canJump = false;
             }
         }
 
-        // 애니메이터가 연결되어 있고 공중에 떠 있을 때(선택적) 높이와 오르내림 속도를 애니메이터에 전달합니다.
-        if (anim != null)
+        // 2. 점프 처리
+        if (canJump && Input.GetKey(KeyCode.Space) && _currentJumpCount < maxJumpCount)
         {
-            // 1. 위로 올라가는지 / 아래로 떨어지는지 (+/- 속도)
-            anim.SetFloat("VelocityY", rigid.linearVelocity.y);
+            float jumpSpeed = (2f * jumpHeight) / timeToJumpApex;
+            _rigid.linearVelocity = new Vector2(_rigid.linearVelocity.x, jumpSpeed);
+            _currentJumpCount++;
 
-            // 2. 현재 절대적인 높이 위치
-            anim.SetFloat("HeightY", transform.position.y);
-        }
-
-        // --- 점프/낙하 시간에 따른 중력(속도) 조절 및 애니메이션 변경 ---
-        if (rigid.linearVelocity.y > 0.01f)
-        {
-            // 위로 올라가는 중 (계산된 정확한 중력 적용)
-            rigid.gravityScale = calculatedJumpGravityScale;
-
-            if (anim != null)
+            if (_anim != null)
             {
-                // 애니메이션이 매 프레임 처음부터 재생되는 현상을 막기 위해 현재 상태 확인
-                AnimatorStateInfo stateInfo = anim.GetCurrentAnimatorStateInfo(0);
-                if (!stateInfo.IsName("PlayerJump"))
-                {
-                    anim.Play("PlayerJump");
-                }
+                _anim.Play("PlayerJump", -1, 0f);
+                _anim.SetInteger("state", (int)PlayerState.Jump);
             }
         }
-        else if (rigid.linearVelocity.y < -0.01f)
-        {
-            // 아래로 떨어지는 중
-            rigid.gravityScale = fallGravityScale;
 
-            if (anim != null)
+        // 3. 중력 및 하강 애니메이션 처리
+        float velocityY = _rigid.linearVelocity.y;
+
+        if (velocityY > 0.01f) // 상승
+        {
+            float requiredGravity = (2f * jumpHeight) / (timeToJumpApex * timeToJumpApex);
+            _rigid.gravityScale = requiredGravity / Mathf.Abs(Physics2D.gravity.y);
+        }
+        else if (velocityY < -0.01f) // 하강
+        {
+            _rigid.gravityScale = fallGravityScale;
+
+            if (_anim != null && !isJumpAnim && !isLandAnim)
             {
-                // 내려갈 때는 낙하 애니메이션 재생
-                AnimatorStateInfo stateInfo = anim.GetCurrentAnimatorStateInfo(0);
-                if (!stateInfo.IsName("PlayerLand"))
-                {
-                    anim.Play("PlayerLand");
-                }
+                _anim.Play("PlayerJump", -1, 0.5f);
+                _anim.SetInteger("state", (int)PlayerState.Jump);
             }
         }
-        else
+        else // 바닥 처리
         {
-            // 바닥에 있거나 정점(잠깐 멈춘 상태)일 때
-            rigid.gravityScale = 1f;
+            _rigid.gravityScale = 1f;
         }
     }
 
-    // 바닥과 충돌했을 때 다시 점프할 수 있도록 횟수를 초기화합니다.
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        currentJumpCount = 0;
+        _currentJumpCount = 0;
 
-        // 바닥에 닿았으므로 점프 애니메이션 파라미터 끄기 (달리기/대기 애니메이션으로 복귀)
-        if (anim != null)
+        if (_anim != null)
         {
-            anim.SetBool("isJumping", false);
+            _anim.SetInteger("state", (int)PlayerState.Land);
         }
     }
 }
-
