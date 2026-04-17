@@ -2,18 +2,27 @@ using UnityEngine;
 
 public class Spawner : MonoBehaviour
 {
-    [Header("생성시간")]
-    public float minSpawnTime = 1.0f;
-    public float maxSpawnTime = 3.0f;
-
-    [Header("생성할건물")]
+    [Header("건물 생성 설정")]
+    public float minBuildingSpawnTime = 1.0f;
+    public float maxBuildingSpawnTime = 3.0f;
     public GameObject[] buildingPrefabs;
+
+    [Header("적 생성 설정")]
+    public float minEnemySpawnTime = 2.0f;
+    public float maxEnemySpawnTime = 5.0f;
+    public GameObject[] enemyPrefabs;
 
     private void OnEnable()
     {
-        float randomTime = Random.Range(minSpawnTime, maxSpawnTime);
-        Invoke("Spawn", randomTime);
+        // 건물 생성 타이머 시작
+        float randomBuildingTime = Random.Range(minBuildingSpawnTime, maxBuildingSpawnTime);
+        Invoke("SpawnBuilding", randomBuildingTime);
+
+        // 적 생성 타이머 시작
+        float randomEnemyTime = Random.Range(minEnemySpawnTime, maxEnemySpawnTime);
+        Invoke("SpawnEnemy", randomEnemyTime);
     }
+    
     private void OnDisable()
     {
         CancelInvoke();
@@ -21,21 +30,42 @@ public class Spawner : MonoBehaviour
 
     void Start()
     {
-        MakeInstance();
+        MakeBuildingInstance();
+        // 게임 시작 시 적도 하나 생성할지 여부에 따라 주석을 활성화할 수 있습니다.
+        // MakeEnemyInstance(); 
     }
 
-    void Spawn()
+    void SpawnBuilding()
     {
-        Debug.Log("Spawn");
-        MakeInstance();
+        MakeBuildingInstance();
 
-        float randomTime = Random.Range(minSpawnTime, maxSpawnTime);
-        Invoke("Spawn", randomTime);
+        float randomTime = Random.Range(minBuildingSpawnTime, maxBuildingSpawnTime);
+        Invoke("SpawnBuilding", randomTime);
     }
 
-    void MakeInstance()
+    void SpawnEnemy()
     {
-        GameObject randomBuilding = buildingPrefabs[Random.Range(0, buildingPrefabs.Length)];
-        Instantiate(randomBuilding, transform.position, Quaternion.identity);
+        MakeEnemyInstance();
+
+        float randomTime = Random.Range(minEnemySpawnTime, maxEnemySpawnTime);
+        Invoke("SpawnEnemy", randomTime);
+    }
+
+    void MakeBuildingInstance()
+    {
+        if (buildingPrefabs != null && buildingPrefabs.Length > 0)
+        {
+            GameObject randomBuilding = buildingPrefabs[Random.Range(0, buildingPrefabs.Length)];
+            Instantiate(randomBuilding, transform.position, Quaternion.identity);
+        }
+    }
+
+    void MakeEnemyInstance()
+    {
+        if (enemyPrefabs != null && enemyPrefabs.Length > 0)
+        {
+            GameObject randomEnemy = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
+            Instantiate(randomEnemy, transform.position, Quaternion.identity);
+        }
     }
 }
