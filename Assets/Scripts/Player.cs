@@ -29,7 +29,7 @@ public class Player : MonoBehaviour
     private bool _isJumpAnim;
     private bool _isLandAnim;
 
-    private int lives = 3;
+    public int lives = 3;
     public bool isInvincible = false;
 
     private Collider2D collider2D;
