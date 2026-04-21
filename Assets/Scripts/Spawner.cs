@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Spawner : MonoBehaviour
 {
@@ -53,6 +53,8 @@ public class Spawner : MonoBehaviour
 
     void MakeBuildingInstance()
     {
+        if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing) return;
+
         if (buildingPrefabs != null && buildingPrefabs.Length > 0)
         {
             GameObject randomBuilding = buildingPrefabs[Random.Range(0, buildingPrefabs.Length)];
@@ -62,6 +64,8 @@ public class Spawner : MonoBehaviour
 
     void MakeEnemyInstance()
     {
+        if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing) return;
+
         if (enemyPrefabs != null && enemyPrefabs.Length > 0)
         {
             GameObject randomEnemy = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];

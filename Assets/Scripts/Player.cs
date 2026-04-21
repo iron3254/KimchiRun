@@ -29,23 +29,19 @@ public class Player : MonoBehaviour
     private bool _isJumpAnim;
     private bool _isLandAnim;
 
-    public int lives = 3;
     public bool isInvincible = false;
 
-    private Collider2D collider2D;
+    private Collider2D _collider;
 
     private void Awake()
     {
         _rigid = GetComponent<Rigidbody2D>();
         _anim = GetComponent<Animator>();
-        collider2D = GetComponent<Collider2D>();
+        _collider = GetComponent<Collider2D>();
     }
 
     private void Start()
     {
-        _rigid = GetComponent<Rigidbody2D>();
-        _anim = GetComponent<Animator>();
-
         _currentJumpCount = 0;
         _isGrounded = false;
     }
@@ -176,29 +172,28 @@ public class Player : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (other.gameObject.CompareTag("Enemy"))
-        {
-            Debug.Log("Player triggerEnter in Enemy : " + other.gameObject.name);
+        string targetTag = other.tag;
 
+        if (targetTag == "Enemy" || targetTag == "Food" || targetTag == "Gold")
+        {
+            Debug.Log($"Player triggerEnter in {targetTag} : {other.gameObject.name}");
             Destroy(other.gameObject);
-            if (!isInvincible)
+
+            switch (targetTag)
             {
-                Damage();
+                case "Enemy":
+                    if (!isInvincible)
+                    {
+                        Damage();
+                    }
+                    break;
+                case "Food":
+                    Heal();
+                    break;
+                case "Gold":
+                    StartInvincible();
+                    break;
             }
-        }
-        else if (other.gameObject.CompareTag("Food"))
-        {
-            Debug.Log("Player triggerEnter in Food : " + other.gameObject.name);
-
-            Destroy(other.gameObject);
-            Heal();
-        }
-        else if (other.gameObject.CompareTag("Gold"))
-        {
-            Debug.Log("Player triggerEnter in Gold : " + other.gameObject.name);
-
-            Destroy(other.gameObject);
-            StartInvincible();
         }
     }
 
@@ -215,25 +210,23 @@ public class Player : MonoBehaviour
 
     private void Heal()
     {
-        lives = Mathf.Min(lives + 1, 3);
-        Debug.Log("Player lives : " + lives);
+        GameManager.Instance.AddLive();
     }
 
     private void Damage()
     {
-        lives--;
-        if (lives <= 0)
+        GameManager.Instance.RemoveLive();
+        if (GameManager.Instance.Lives <= 0)
         {
-            Debug.Log("Game OVER");
+            Debug.Log("Game Over");
             KillPlayer();
         }
-        Debug.Log("Player lives : " + lives);
     }
 
     private void KillPlayer()
     {
-        collider2D.enabled = false;
+        _collider.enabled = false;
         _anim.enabled = false;
-        _rigid.AddForceY(20, ForceMode2D.Impulse);
+        _rigid.AddForceY(20f, ForceMode2D.Impulse);
     }
 }
