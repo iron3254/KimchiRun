@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class Spawner : MonoBehaviour
 {
@@ -22,7 +22,7 @@ public class Spawner : MonoBehaviour
         float randomEnemyTime = Random.Range(minEnemySpawnTime, maxEnemySpawnTime);
         Invoke("SpawnEnemy", randomEnemyTime);
     }
-    
+
     private void OnDisable()
     {
         CancelInvoke();
