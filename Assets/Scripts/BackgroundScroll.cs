@@ -1,23 +1,24 @@
-using System.Net.NetworkInformation;
 using UnityEngine;
 
 public class BackgroundScroll : MonoBehaviour
 {
-    public float scrollSoeed = 3.5f;
-    public Material mat;
-    void Start()
-    {
-        mat = GetComponent<MeshRenderer>().material;
+    private Material material;
 
+    private void Start()
+    {
+        material = GetComponent<MeshRenderer>().material;
     }
 
-    void Update()
+    private void Update()
     {
-        // Tiling 뿐만 아니라, 오브젝트의 화면상 크기(Scale)까지 고려하여 보정합니다.
-        // 이렇게 하면 scrollSoeed가 "실제 게임 월드에서 움직이는 거리(속도)"로 완전히 통일됩니다.
-        float realSpeed = scrollSoeed * mat.mainTextureScale.x / transform.lossyScale.x;
-        float offset = realSpeed * Time.deltaTime;
+        float gameSpeed = GameManager.Instance.CalculateGameSpeed();
 
-        mat.mainTextureOffset += new Vector2(offset, 0);
+        // 오브젝트 넓이(Scale)와 머티리얼 타일링(Tiling) 비율을 역산하여
+        // 실제 게임 오브젝트들의 이동 속도(Mover)와 배경 텍스처 이동 속도를 완벽히 일치시킵니다.
+
+        float offsetSpeed = gameSpeed * material.mainTextureScale.x / transform.lossyScale.x;
+
+
+        material.mainTextureOffset += new Vector2(offsetSpeed * Time.deltaTime, 0);
     }
 }

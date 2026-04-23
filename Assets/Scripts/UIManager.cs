@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 public class UIManager : MonoBehaviour
@@ -6,6 +7,10 @@ public class UIManager : MonoBehaviour
 
     public GameObject IntroUI;
     public GameObject ItemSpawner;
+
+    public TMP_Text socreText;
+    public TMP_Text highSocreText;
+
 
     private void Awake()
     {
@@ -27,6 +32,15 @@ public class UIManager : MonoBehaviour
 
     void Update()
     {
-
+        if (GameManager.Instance.State == GameState.Playing)
+        {
+            socreText.text = "Score: " + GameManager.Instance.CalculateScore();
+            highSocreText.text = "High Score: " + GameManager.Instance.HighScore;
+        }
+        else
+        {
+            socreText.text = "";
+            highSocreText.text = "";
+        }
     }
 }

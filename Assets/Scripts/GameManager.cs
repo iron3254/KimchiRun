@@ -14,11 +14,9 @@ public class GameManager : MonoBehaviour
     public GameState State = GameState.Intro;
 
     public int Lives = 3;
-    private bool isGameOver = false;
 
-    public float playStartTime;
-    public float playTime;
 
+    public float PlayStartTime;
     public int HighScore;
     public int MyScore;
 
@@ -35,18 +33,25 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        // 게임 시작 시 기기에 저장된 최고 점수를 불러옵니다.
+        HighScore = GetHighScore();
+    }
+
     private void Update()
     {
         if (State == GameState.Intro)
         {
-            isGameOver = false;
+
+            // 스페이스바나 마우스 클릭 시 게임 시작
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
             {
                 State = GameState.Playing;
                 UIManager.Instance.IntroUI.SetActive(false);
                 UIManager.Instance.ItemSpawner.SetActive(true);
 
-                playStartTime = Time.time;
+                PlayStartTime = Time.time;
             }
         }
         else if (State == GameState.Playing)
@@ -55,34 +60,22 @@ public class GameManager : MonoBehaviour
             {
                 State = GameState.GameOver;
                 UIManager.Instance.ItemSpawner.SetActive(false);
+                SaveHighScore();
             }
         }
         else if (State == GameState.GameOver)
         {
-            if (isGameOver == false)
+            // 게임오버 상태일 때 스페이스바를 누르면 씬 리로드
+            if (Input.GetKeyDown(KeyCode.Space))
             {
-                Invoke("GameOverEvent", 3f);
+                Lives = 3; // 라이프 초기화
+                State = GameState.Intro;
+                SceneManager.LoadScene("Main");
             }
-            isGameOver = true;
         }
     }
 
-    public int CalculateScore()
-    {
-        int score = Mathf.FloorToInt(Time.time - playStartTime);
-        return score;
-    }
-
-    private void GameOverEvent()
-    {
-        Lives = 3;
-        State = GameState.Intro;
-        SceneManager.LoadScene("Main");
-        Debug.Log("Scene Reload!");
-    }
-
-
-    //Live를 1을 더해 3을 넘지 않게 한다.
+    // 라이프를 1을 더해 3을 넘지 않게 합니다.
     public void AddLive()
     {
         Lives = Mathf.Min(Lives + 1, 3);
@@ -97,5 +90,41 @@ public class GameManager : MonoBehaviour
     {
         State = GameState.GameOver;
         UIManager.Instance.ItemSpawner.SetActive(false);
+        SaveHighScore();
     }
+
+    public int CalculateScore()
+    {
+        return Mathf.FloorToInt(Time.time - PlayStartTime);
+    }
+
+    public int GetHighScore()
+    {
+        return PlayerPrefs.GetInt("HighScore", 0);
+    }
+
+    public void SaveHighScore()
+    {
+        MyScore = Mathf.FloorToInt(CalculateScore());
+        HighScore = PlayerPrefs.GetInt("HighScore", 0);
+
+        if (MyScore > HighScore)
+        {
+            // 신기록 갱신
+            PlayerPrefs.SetInt("HighScore", MyScore);
+            PlayerPrefs.Save();
+        }
+    }
+
+    public float CalculateGameSpeed()
+    {
+        if (State != GameState.Playing)
+        {
+            return 5f;
+        }
+        float speed = 8f + (0.5f * Mathf.Floor(CalculateScore() / 10f));
+        return Mathf.Min(speed, 30f);
+    }
+
+
 }

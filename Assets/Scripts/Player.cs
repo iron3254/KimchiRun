@@ -72,7 +72,8 @@ public class Player : MonoBehaviour
     // 2. 점프 입력을 받고 물리를 적용하는 메서드
     private void HandleJump()
     {
-        bool isJumpKeyPressed = Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0);
+        // GetKeyDown 대신 GetKey를 사용하여 키를 꾹 누르고 있는 상태를 계속 인식합니다.
+        bool isJumpKeyPressed = Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0);
         bool canJump = !isJumpAnim; // 점프 애니메이션이 한창 진행 중일 때는 중복 점프 애니메이션 진행 방지
 
         if (canJump && isJumpKeyPressed && currentJumpCount < maxJumpCount)
